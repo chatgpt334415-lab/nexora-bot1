@@ -14,20 +14,20 @@ def home():
 def run_web():
     app.run(host="0.0.0.0", port=10000)
 
-threading.Thread(target=run_web).start()
+threading.Thread(target=run_web, daemon=True).start()
 
 # ================== CONFIG ==================
 
 BOT_TOKEN = "8565694718:AAHdDrHKohkMOf0iv4xvTrVnvibFCRyDY7w"
 
-CHANNEL_1M  = "-1003104422841"   # WinGo 1M Channel
-CHANNEL_30S = "-1003639265979"   # WinGo 30S Channel
+CHANNEL_1M  = "-1003104422841"
+CHANNEL_30S = "-1003639265979"
 
 API_1M  = "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json"
 API_30S = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json"
 
 WIN_STICKER  = "CAACAgEAAxkBAAEgWZhpSXFsTfLLL2l0-3fOYyD57f2mwgACEAADSSyZT7GvEDht8CMlNgQ"
-LOSS_STICKER = ""   # empty থাকলে skip
+LOSS_STICKER = ""
 
 # ================== MEMORY ==================
 
@@ -105,7 +105,7 @@ def fetch_latest(api):
 
 # ================== MAIN LOOP ==================
 
-print("BOT STARTED — NEXORA AI | RENDER FREE MODE")
+print("BOT STARTED — NEXORA AI | FINAL FIXED LOGIC")
 
 while True:
     for g in games.values():
@@ -118,13 +118,11 @@ while True:
         number = int(data["number"])
         actual = "BIG" if number >= 5 else "SMALL"
 
+        # duplicate block
         if issue == g["last_issue"]:
             continue
 
-        g["history"].append(actual)
-        if len(g["history"]) > 6:
-            g["history"].pop(0)
-
+        # ---------- RESULT CHECK (previous prediction) ----------
         if g["last_prediction"] is not None:
             if actual == g["last_prediction"]:
                 send_sticker(g["channel"], WIN_STICKER)
@@ -133,21 +131,26 @@ while True:
                 send_sticker(g["channel"], LOSS_STICKER)
                 g["loss"] += 1
 
+        # ---------- PREDICTION (USING OLD HISTORY) ----------
         prediction = nexora_predict(g["history"])
-        if prediction is None:
-            g["last_issue"] = issue
-            continue
 
-        closed_period = int(issue[-4:])
-        next_period = 1 if closed_period == 2880 else closed_period + 1
+        # ---------- UPDATE HISTORY (AFTER PREDICTION) ----------
+        g["history"].append(actual)
+        if len(g["history"]) > 6:
+            g["history"].pop(0)
 
-        show = "BIGGG" if prediction == "BIG" else "SMALL"
-        step = f"STEP_{g['loss'] + 1}"
+        if prediction is not None:
+            closed_period = int(issue[-4:])
+            next_period = 1 if closed_period == 2880 else closed_period + 1
 
-        msg = f"{next_period:04d}   {show}   {step}"
-        send_message(g["channel"], f"*{md_escape(msg)}*")
+            show = "BIGGG" if prediction == "BIG" else "SMALL"
+            step = f"STEP_{g['loss'] + 1}"
+
+            msg = f"{next_period:04d}   {show}   {step}"
+            send_message(g["channel"], f"*{md_escape(msg)}*")
+
+            g["last_prediction"] = prediction
 
         g["last_issue"] = issue
-        g["last_prediction"] = prediction
 
     time.sleep(1)
