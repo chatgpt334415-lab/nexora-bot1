@@ -1,10 +1,9 @@
 import time
 import requests
-import os
 import threading
 from flask import Flask
 
-# ================== WEB SERVER (RENDER FIX) ==================
+# ================== WEB SERVER (RENDER FREE FIX) ==================
 
 app = Flask(__name__)
 
@@ -19,7 +18,7 @@ threading.Thread(target=run_web).start()
 
 # ================== CONFIG ==================
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")   # Render Environment Variable
+BOT_TOKEN = "8565694718:AAHdDrHKohkMOf0iv4xvTrVnvibFCRyDY7w"
 
 CHANNEL_1M  = "-1003104422841"   # WinGo 1M Channel
 CHANNEL_30S = "-1003639265979"   # WinGo 30S Channel
