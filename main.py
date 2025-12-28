@@ -1,9 +1,25 @@
 import time
 import requests
+import os
+import threading
+from flask import Flask
+
+# ================== WEB SERVER (RENDER FIX) ==================
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "NEXORA BOT RUNNING"
+
+def run_web():
+    app.run(host="0.0.0.0", port=10000)
+
+threading.Thread(target=run_web).start()
 
 # ================== CONFIG ==================
 
-BOT_TOKEN = "8565694718:AAHdDrHKohkMOf0iv4xvTrVnvibFCRyDY7w"
+BOT_TOKEN = os.getenv("BOT_TOKEN")   # Render Environment Variable
 
 CHANNEL_1M  = "-1003104422841"   # WinGo 1M Channel
 CHANNEL_30S = "-1003639265979"   # WinGo 30S Channel
@@ -90,7 +106,7 @@ def fetch_latest(api):
 
 # ================== MAIN LOOP ==================
 
-print("BOT STARTED — NEXORA AI | OPTION B (Separated Channels)")
+print("BOT STARTED — NEXORA AI | RENDER FREE MODE")
 
 while True:
     for g in games.values():
@@ -106,12 +122,10 @@ while True:
         if issue == g["last_issue"]:
             continue
 
-        # -------- history --------
         g["history"].append(actual)
         if len(g["history"]) > 6:
             g["history"].pop(0)
 
-        # -------- result --------
         if g["last_prediction"] is not None:
             if actual == g["last_prediction"]:
                 send_sticker(g["channel"], WIN_STICKER)
@@ -120,7 +134,6 @@ while True:
                 send_sticker(g["channel"], LOSS_STICKER)
                 g["loss"] += 1
 
-        # -------- signal --------
         prediction = nexora_predict(g["history"])
         if prediction is None:
             g["last_issue"] = issue
